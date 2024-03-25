@@ -1,4 +1,7 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { getFirestore, collection, getDocs, onSnapshot, doc, query } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js'
+
+const db = getFirestore();
 
 const canvas = d3.select('.canvas')
 const svg = canvas.append('svg')
@@ -26,44 +29,79 @@ const xAxisGroup = graph.append('g')
 
 const yAxisGroup = graph.append('g');
 
-d3.json('./menu.json')
-    .then((data) => {
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(data, (d) => d.order)])
-            .range([graphHeight, 0])
+// scales
+const y = d3.scaleLinear().range([graphHeight, 0])
+const x = d3.scaleBand().range([0, 500])
+    .paddingInner(0.2)
+    .paddingOuter(0.2)
 
-        const x = d3.scaleBand()
-            .domain(data.map((d) => d.name))
-            .range([0, 500])
-            .paddingInner(0.2)
-            .paddingOuter(0.2)
+// create and call axes
+const xAxis = d3.axisBottom(x);
+const yAxis = d3.axisLeft(y)
+    .ticks(10)
+    .tickFormat((d) => `${d} orders`)
 
-        graph.selectAll('rect')
-            .data(data)
-            .enter()
-            .append('rect')
-            .attr('width', x.bandwidth)
-            .attr('height', (d) => graphHeight - y(d.order))
-            .attr('fill', 'orange')
-            .attr('x', (d, i) => x(d.name))
-            .attr('y', (d, i) => y(d.order))
+// update axes
+xAxisGroup.selectAll('text')
+    .attr('transform', 'rotate(-40)')
+    .attr('text-anchor', 'end')
+    .attr('fill', 'orange')
 
-        // create and call axes
-        const xAxis = d3.axisBottom(x);
-        const yAxis = d3.axisLeft(y)
-            .ticks(10)
-            .tickFormat((d) => `${d} order`)
+// update function
+const update = (data) => {
+    y.domain([0, d3.max(data, (d) => d.orders)])
+    x.domain(data.map((d) => d.name))
 
-        xAxisGroup.call(xAxis)
-        yAxisGroup.call(yAxis)
+    const rects = graph.selectAll('rect').data(data)
 
-        xAxisGroup.selectAll('text')
-            .attr('transform', 'rotate(-40)')
-            .attr('text-anchor', 'end')
-            .attr('fill', 'orange')
+    // remove existing collection
+    rects.exit().remove()
+
+    // update current shapes in dom
+    rects.attr('width', x.bandwidth)
+        .attr('height', (d) => graphHeight - y(d.orders))
+        .attr('fill', 'orange')
+        .attr('x', (d, i) => x(d.name))
+        .attr('y', (d, i) => y(d.orders))
+
+    // append new dom
+    rects.enter()
+        .append('rect')
+        .attr('width', x.bandwidth)
+        .attr('height', (d) => graphHeight - y(d.orders))
+        .attr('fill', 'orange')
+        .attr('x', (d, i) => x(d.name))
+        .attr('y', (d, i) => y(d.orders))
+
+    // call axis
+    xAxisGroup.call(xAxis)
+    yAxisGroup.call(yAxis)
+}
+
+let data = []
+
+const dishesQuery = query(collection(db, "dishes"))
+
+const unsub = onSnapshot(dishesQuery, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+        const doc = {
+            ...change.doc.data(),
+            id: change.doc.id
+        }
+
+        if (change.type === "added") {
+            data.push(doc)
+        }
+        if (change.type === "modified") {
+            const index = data.findIndex((data) => data.id === doc.id)
+            data[index] = doc
+        }
+        if (change.type === "removed") {
+            data = data.filter((data) => data.id !== doc.id)
+        }
     })
 
-
-
+    update(data)
+});
 
 

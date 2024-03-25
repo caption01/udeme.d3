@@ -10,7 +10,29 @@
    <div class="canvas" >
    </div>
 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
+   <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js'
+
+        // If you enabled Analytics in your project, add the Firebase SDK for Google Analytics
+        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-analytics.js'
+
+        // Add Firebase products that you want to use
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js'
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js'
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJxsBPHod3Gsdootg1VVbyxCvgEB6IdUE",
+            authDomain: "udemy-d3-firebase-ca61f.firebaseapp.com",
+            databaseURL: "https://udemy-d3-firebase-ca61f-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "udemy-d3-firebase-ca61f",
+            storageBucket: "udemy-d3-firebase-ca61f.appspot.com",
+            messagingSenderId: "898400353782",
+            appId: "1:898400353782:web:436137a4eadcaa473b1bd7",
+            measurementId: "G-J5GZENFN3E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+    </script>
     <script src="index.js" type="module" ></script>
 </body>
 </html>

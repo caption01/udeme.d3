@@ -38,7 +38,7 @@ const x = d3.scaleBand().range([0, 500])
 // create and call axes
 const xAxis = d3.axisBottom(x);
 const yAxis = d3.axisLeft(y)
-    .ticks(10)
+    .ticks(5)
     .tickFormat((d) => `${d} orders`)
 
 // update axes
@@ -46,6 +46,8 @@ xAxisGroup.selectAll('text')
     .attr('transform', 'rotate(-40)')
     .attr('text-anchor', 'end')
     .attr('fill', 'orange')
+
+const t = d3.transition().duration(500)
 
 // update function
 const update = (data) => {
@@ -59,19 +61,24 @@ const update = (data) => {
 
     // update current shapes in dom
     rects.attr('width', x.bandwidth)
-        .attr('height', (d) => graphHeight - y(d.orders))
         .attr('fill', 'orange')
         .attr('x', (d, i) => x(d.name))
-        .attr('y', (d, i) => y(d.orders))
+        .transition(t) // this can inherit from merge method
+            .attr('height', (d) => graphHeight - y(d.orders))
+            .attr('y', (d, i) => y(d.orders))
 
     // append new dom
     rects.enter()
         .append('rect')
-        .attr('width', x.bandwidth)
-        .attr('height', (d) => graphHeight - y(d.orders))
+        .attr('width', 0)
+        .attr('height', 0)
         .attr('fill', 'orange')
         .attr('x', (d, i) => x(d.name))
-        .attr('y', (d, i) => y(d.orders))
+        .attr('y', (d, i) => graphHeight)
+        .transition(t)
+            .attrTween('width', widthTween)
+            .attr('height', (d) => graphHeight - y(d.orders))
+            .attr('y', (d, i) => y(d.orders))
 
     // call axis
     xAxisGroup.call(xAxis)
@@ -105,3 +112,14 @@ const unsub = onSnapshot(dishesQuery, (snapshot) => {
 });
 
 
+const widthTween = (d) => {
+    // define interpolation
+    let i = d3.interpolate(0, x.bandwidth());
+
+    // return function which takes a time ticker 't'
+    return function(t) {
+
+        // return this value from interpolation
+        return i(t)
+    }
+}
